@@ -4,6 +4,7 @@ const { readdirSync, statSync } = require('fs');
 const { join, dirname, basename } = require('path');
 const { spawnSync } = require('child_process');
 
+const DEFAULT_STACK_SIZE = 256;
 const USAGE = `
 Build tool for clox. Compile all the files into
 an executable. Default output executable name
@@ -13,15 +14,15 @@ Usage:
     ./build.js [options] [output]
 
 Arguments:
-    %--debug%     Perform a debug build (the default).
-    %--opt%       Perform a prod build.
-    %--help%      Show this help message.
-    %--verbose%   Show all commands executed.
+    %--release%        Perform a prod build.
+    %--help%           Show this help message.
+    %--verbose%        Show all commands executed.
+    %--stack-size%     Define the stack size (default: ${DEFAULT_STACK_SIZE}).
 `;
 
 const buildOptions = {
     flags: ['-Wall'],
-    output: 'clox',
+    output: 'cloxc',
     tmpDir: 'build',
     verbose: false,
 };
@@ -64,15 +65,24 @@ function processArgs() {
         console.log(USAGE.replace(/\%/g, ''));
         process.exit(1);
     }
-    if (process.argv.includes('--debug')) {
-        buildOptions.flags.push('-g');
-    }
-    if (process.argv.includes('--opt')) {
-        //buildOptions.flags.
+    if (process.argv.includes('--release')) {
+        buildOptions.flags.push('-O3');
+    } else {
+        buildOptions.flags.push('-g', '-DDEBUG_TRACE_EXECUTION');
     }
     if (process.argv.includes('--verbose')) {
         buildOptions.verbose = true;
     }
+    let stackSize = DEFAULT_STACK_SIZE;
+    if (process.argv.includes('--stack-size')) {
+        const stackParam = process.argv[process.argv.indexOf('--stack-size') + 1];
+        try {
+            stackSize = parseInt(stackParam, 10);
+        } catch (err) {
+            console.error(`Invalid stack size argument ${stackSize}. Expected integer.`);
+        }
+    }
+    buildOptions.flags.push(`-DSTACK_MAX=${stackSize}`);
 }
 
 function walk(dir, res) {

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "memory.h"
 #include "value.h"
@@ -10,7 +11,7 @@ void initValueArray(ValueArray* data) {
 }
 
 void freeValueArray(ValueArray* data) {
-    GROW_ARRAY(data->values, Value, data->capacity, 0);
+    FREE_ARRAY(Value, data->values, data->capacity);
     initValueArray(data);
 }
 
@@ -23,4 +24,8 @@ void writeValueArray(ValueArray* data, Value value) {
 
     data->values[data->count] = value;
     data->count++;
+}
+
+void printValue(Value value) {
+    printf("%g", value);
 }
